@@ -16,7 +16,11 @@ except ImportError:
 
 app = Flask(__name__)
 
-DEFAULT_MODEL_ID = os.environ.get("NLP2CLI_MODEL_ID", "JayProngs/NL2BASH")
+DEFAULT_MODEL_ID = os.environ.get(
+    "NL2CLI_MODEL_ID",
+    os.environ.get("NLP2CLI_MODEL_ID", "JayProngs/NL2BASH"),
+)
+DEFAULT_GENERATOR = os.environ.get("NL2CLI_GENERATOR", "auto").lower()
 model = None
 tokenizer = None
 device = None
@@ -94,6 +98,14 @@ class CommandAnalysis:
     findings: list
     requires_confirmation: bool
     safer_alternative: str = ""
+
+
+@dataclass
+class GenerationResult:
+    command: str
+    provider: str
+    model_id: str = ""
+    error: str = ""
 
 
 def analyze_command(command):
@@ -253,11 +265,37 @@ def fallback_bash_command(input_text):
     return "echo 'No confident command generated. Try a more specific instruction.'"
 
 
-def generate_bash_command(input_text, context=None):
+def generate_command(input_text, context=None):
+    generator = DEFAULT_GENERATOR if DEFAULT_GENERATOR in {"auto", "huggingface", "fallback"} else "auto"
+
+    if generator == "fallback":
+        return generate_with_fallback(input_text)
+
+    result = generate_with_huggingface(input_text, context)
+    if result.command:
+        return result
+
+    return generate_with_fallback(input_text, result.error)
+
+
+def generate_with_fallback(input_text, error=""):
+    return GenerationResult(
+        command=fallback_bash_command(input_text),
+        provider="fallback",
+        error=error,
+    )
+
+
+def generate_with_huggingface(input_text, context=None):
     loaded_model, loaded_tokenizer, loaded_device = load_model()
 
     if loaded_model is None or loaded_tokenizer is None:
-        return fallback_bash_command(input_text)
+        return GenerationResult(
+            command="",
+            provider="huggingface",
+            model_id=DEFAULT_MODEL_ID,
+            error=model_load_error or "Hugging Face model is unavailable.",
+        )
 
     # Format context as structured text
     if context and 1!=1:
@@ -308,7 +346,11 @@ def generate_bash_command(input_text, context=None):
         )
 
     predicted_cmd = loaded_tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return predicted_cmd.strip()
+    return GenerationResult(
+        command=predicted_cmd.strip(),
+        provider="huggingface",
+        model_id=DEFAULT_MODEL_ID,
+    )
 
 
 def get_file_context(directory):
@@ -365,16 +407,18 @@ def generate():
 
     try:
         file_context = get_file_context(directory)
-        generated_command = generate_bash_command(user_input, file_context)
+        generation = generate_command(user_input, file_context)
+        generated_command = generation.command
         generated_command = validate_and_correct_command(generated_command)
         analysis = analyze_command(generated_command)
         return jsonify({
             "generated_command": generated_command,
             "analysis": asdict(analysis),
             "model_status": {
-                "provider": "huggingface" if model is not None else "fallback",
-                "model_id": DEFAULT_MODEL_ID if model is not None else None,
-                "error": model_load_error,
+                "provider": generation.provider,
+                "model_id": generation.model_id or None,
+                "error": generation.error or None,
+                "mode": DEFAULT_GENERATOR,
             }
         })
     except Exception as e:

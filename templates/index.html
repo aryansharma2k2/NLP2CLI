@@ -1,269 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Meta Tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NLP2CLI Command Workbench</title>
-    <!-- Bootstrap CSS -->
+    <title>NL2CLI Command Workbench</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#"><i class="fas fa-terminal"></i> NLP2CLI Workbench</a>
+    <nav class="topbar">
+        <div class="container topbar-inner">
+            <a class="brand" href="#">
+                <i class="fas fa-terminal"></i>
+                <span>NL2CLI</span>
+            </a>
+            <span class="topbar-label">Local Command Workbench</span>
         </div>
     </nav>
 
-    <!-- Main Container -->
-    <div class="container mt-5">
-        <!-- Heading Section -->
-        <div class="text-center mb-5">
-            <h1 class="display-4">Command Workbench</h1>
-            <p class="lead">Translate intent into shell commands, review risk, then execute deliberately.</p>
-        </div>
+    <main class="container app-shell">
+        <section class="intro">
+            <div>
+                <p class="eyebrow">Intent to terminal</p>
+                <h1>Generate commands you can inspect before you run.</h1>
+            </div>
+            <p class="intro-copy">
+                NL2CLI translates plain English into shell commands, explains the result, scores execution risk,
+                and asks for explicit confirmation before high-risk commands run.
+            </p>
+        </section>
 
-        <!-- Command Generator Card -->
-        <div class="card shadow p-4 mb-5">
-            <form id="commandForm">
-                <div class="mb-3">
-                    <label for="instruction" class="form-label"><i class="fas fa-keyboard"></i> What do you want the terminal to do?</label>
-                    <input type="text" id="instruction" class="form-control" placeholder="e.g., Find Python files changed this week" required>
+        <section class="workspace-grid">
+            <div class="panel command-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Step 1</p>
+                        <h2>Describe the task</h2>
+                    </div>
+                    <i class="fas fa-wand-magic-sparkles panel-icon"></i>
                 </div>
-                <div class="mb-3">
-                    <label for="directory" class="form-label"><i class="fas fa-folder-open"></i> Select working directory:</label>
+
+                <form id="commandForm" class="command-form">
+                    <label for="instruction">Instruction</label>
+                    <input
+                        type="text"
+                        id="instruction"
+                        class="form-control"
+                        placeholder="Find Python files changed this week"
+                        required
+                    >
+
+                    <label for="directory">Working directory</label>
                     <select id="directory" class="form-select">
                         <option value=".">Current Directory</option>
                         {% for directory in directories %}
                         <option value="{{ directory }}">{{ directory }}</option>
                         {% endfor %}
                     </select>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-magic"></i>
+                        Generate
+                    </button>
+                </form>
+            </div>
+
+            <div class="panel review-panel" id="resultContainer" hidden>
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Step 2</p>
+                        <h2>Review the command</h2>
+                    </div>
+                    <span id="riskBadge" class="risk-badge risk-unknown">Unknown risk</span>
                 </div>
-                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-magic"></i> Generate Command</button>
-            </form>
-        </div>
 
-        <!-- Result Container -->
-        <div class="card shadow p-4 mb-5" id="resultContainer" style="display: none;">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0"><i class="fas fa-code"></i> Generated Command</h5>
-                <span id="riskBadge" class="risk-badge risk-unknown">Unknown risk</span>
+                <p id="modelStatus" class="model-status" hidden></p>
+                <textarea id="editableCommand" class="form-control command-editor" rows="3"></textarea>
+
+                <div id="analysisPanel" class="analysis-panel">
+                    <p class="analysis-summary" id="analysisSummary"></p>
+                    <ul id="analysisFindings" class="analysis-findings"></ul>
+                    <div id="saferAlternative" class="safer-alternative" hidden></div>
+                </div>
+
+                <div class="form-check high-risk-confirmation" id="highRiskConfirmation" hidden>
+                    <input class="form-check-input" type="checkbox" value="" id="confirmHighRisk">
+                    <label class="form-check-label" for="confirmHighRisk">
+                        I reviewed the risk notes and want to execute this high-risk command.
+                    </label>
+                </div>
+
+                <button id="executeCommand" class="btn btn-success">
+                    <i class="fas fa-play"></i>
+                    Execute
+                </button>
             </div>
-            <div id="modelStatus" class="model-status mb-2"></div>
-            <textarea id="editableCommand" class="form-control mb-3" rows="2"></textarea>
+        </section>
 
-            <div id="analysisPanel" class="analysis-panel mb-3">
-                <div class="analysis-summary" id="analysisSummary"></div>
-                <ul id="analysisFindings" class="analysis-findings mb-0"></ul>
-                <div id="saferAlternative" class="safer-alternative mt-3"></div>
+        <section class="panel history-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Session</p>
+                    <h2>Execution history</h2>
+                </div>
+                <i class="fas fa-clock-rotate-left panel-icon"></i>
             </div>
 
-            <div class="form-check high-risk-confirmation mb-3 d-none" id="highRiskConfirmation">
-                <input class="form-check-input" type="checkbox" value="" id="confirmHighRisk">
-                <label class="form-check-label" for="confirmHighRisk">
-                    I reviewed the risk notes and want to execute this high-risk command.
-                </label>
-            </div>
-
-            <button id="executeCommand" class="btn btn-success w-100"><i class="fas fa-play"></i> Execute Command</button>
-        </div>
-
-        <!-- Execution History Section -->
-        <div class="card shadow p-4">
-            <h2><i class="fas fa-history"></i> Execution History</h2>
-            <ul class="list-group" id="historyList">
+            <ul class="history-list" id="historyList">
                 {% for entry in history %}
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between gap-2">
-                        <strong>Command:</strong>
+                <li class="history-item">
+                    <div class="history-heading">
+                        <strong>Command</strong>
                         {% if entry.analysis %}
                         <span class="risk-badge risk-{{ entry.analysis.risk }}">{{ entry.analysis.risk }} risk</span>
                         {% endif %}
                     </div>
-                    <code>{{ entry.command }}</code><br>
-                    <strong>Output:</strong> <pre>{{ entry.output }}</pre>
+                    <code>{{ entry.command }}</code>
+                    <strong>Output</strong>
+                    <pre>{{ entry.output }}</pre>
                 </li>
                 {% endfor %}
             </ul>
-        </div>
-    </div>
+        </section>
+    </main>
 
-    <!-- Command Output Modal -->
     <div class="modal fade" id="outputModal" tabindex="-1" aria-labelledby="outputModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="fas fa-stream"></i> Command Output</h5>
+                    <h5 class="modal-title" id="outputModalLabel">
+                        <i class="fas fa-stream"></i>
+                        Command Output
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <pre id="outputText" class="alert alert-secondary"></pre>
+                    <pre id="outputText" class="command-output"></pre>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="d-none">
+    <div id="loadingSpinner" class="loading-overlay" hidden>
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-primary text-white text-center p-3 mt-5">
-        &copy; {{ current_year }} NLP2CLI
+    <footer class="site-footer">
+        &copy; {{ current_year }} NL2CLI
     </footer>
 
-    <!-- Bootstrap JS and Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Custom JS -->
-    <script>
-        $(document).ready(function () {
-            const outputModal = new bootstrap.Modal(document.getElementById('outputModal'));
-            let currentAnalysis = null;
-
-            function renderAnalysis(analysis) {
-                currentAnalysis = analysis;
-                const risk = analysis?.risk || "unknown";
-                const riskText = `${risk.charAt(0).toUpperCase()}${risk.slice(1)} risk`;
-
-                $("#riskBadge")
-                    .removeClass("risk-low risk-medium risk-high risk-unknown")
-                    .addClass(`risk-${risk}`)
-                    .text(riskText);
-
-                $("#analysisSummary").text(analysis?.summary || "No analysis available.");
-                $("#analysisFindings").empty();
-                (analysis?.findings || []).forEach(function (finding) {
-                    $("<li>").text(finding).appendTo("#analysisFindings");
-                });
-
-                if (analysis?.safer_alternative) {
-                    $("#saferAlternative")
-                        .empty()
-                        .append($("<strong>").text("Safer alternative: "))
-                        .append($("<code>").text(analysis.safer_alternative))
-                        .show();
-                } else {
-                    $("#saferAlternative").empty().hide();
-                }
-
-                $("#confirmHighRisk").prop("checked", false);
-                $("#highRiskConfirmation").toggleClass("d-none", !analysis?.requires_confirmation);
-            }
-
-            function renderModelStatus(status) {
-                if (!status) {
-                    $("#modelStatus").empty().hide();
-                    return;
-                }
-
-                if (status.provider === "fallback") {
-                    $("#modelStatus")
-                        .text("Using local fallback rules because the model is unavailable.")
-                        .show();
-                    return;
-                }
-
-                $("#modelStatus")
-                    .text(`Generated with ${status.model_id}.`)
-                    .show();
-            }
-
-            function prependHistory(command, output, analysis) {
-                const item = $("<li>").addClass("list-group-item");
-                const header = $("<div>").addClass("d-flex justify-content-between gap-2");
-                header.append($("<strong>").text("Command:"));
-                if (analysis?.risk) {
-                    header.append(
-                        $("<span>")
-                            .addClass(`risk-badge risk-${analysis.risk}`)
-                            .text(`${analysis.risk} risk`)
-                    );
-                }
-                item.append(header);
-                item.append($("<code>").text(command));
-                item.append($("<br>"));
-                item.append($("<strong>").text("Output:"));
-                item.append($("<pre>").text(output));
-                $("#historyList").prepend(item);
-            }
-
-            $("#commandForm").on("submit", function (e) {
-                e.preventDefault();
-                const instruction = $("#instruction").val();
-                const directory = $("#directory").val();
-                $("#resultContainer").hide();
-                $("#loadingSpinner").removeClass('d-none');
-                $.ajax({
-                    url: "/generate",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({ instruction: instruction, directory: directory }),
-                    success: function (response) {
-                        $("#editableCommand").val(response.generated_command);
-                        renderAnalysis(response.analysis);
-                        renderModelStatus(response.model_status);
-                        $("#loadingSpinner").addClass('d-none');
-                        $("#resultContainer").show();
-                        $('html, body').animate({
-                            scrollTop: $("#resultContainer").offset().top
-                        }, 500);
-                    },
-                    error: function (xhr) {
-                        $("#loadingSpinner").addClass('d-none');
-                        let errorMessage = "Error generating command. Please try again.";
-                        if (xhr.responseJSON && xhr.responseJSON.error) {
-                            errorMessage = xhr.responseJSON.error;
-                        }
-                        alert(errorMessage);
-                    }
-                });
-            });
-
-            $("#executeCommand").on("click", function () {
-                const command = $("#editableCommand").val();
-                const directory = $("#directory").val();
-                const confirmedHighRisk = $("#confirmHighRisk").is(":checked");
-                $("#loadingSpinner").removeClass('d-none');
-                $.ajax({
-                    url: "/execute",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({
-                        command: command,
-                        directory: directory,
-                        confirmed_high_risk: confirmedHighRisk
-                    }),
-                    success: function (response) {
-                        $("#outputText").text(response.output);
-                        $("#loadingSpinner").addClass('d-none');
-                        outputModal.show();
-                        renderAnalysis(response.analysis);
-                        prependHistory(command, response.output, response.analysis);
-                    },
-                    error: function (xhr) {
-                        $("#loadingSpinner").addClass('d-none');
-                        let errorMessage = "Error executing command. Please try again.";
-                        if (xhr.responseJSON && xhr.responseJSON.error) {
-                            errorMessage = xhr.responseJSON.error;
-                        }
-                        if (xhr.responseJSON && xhr.responseJSON.analysis) {
-                            renderAnalysis(xhr.responseJSON.analysis);
-                        }
-                        alert(errorMessage);
-                    }
-                });
-            });
-        });
-    </script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
