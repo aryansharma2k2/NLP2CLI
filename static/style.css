@@ -1,0 +1,134 @@
+/* General Styles */
+body {
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar Styles */
+.navbar {
+    margin-bottom: 20px;
+}
+
+/* Heading Section */
+h1.display-4 {
+    color: #18212f;
+    font-weight: bold;
+}
+
+/* Card Styles */
+.card {
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* Button Styles */
+.btn-primary, .btn-success {
+    font-size: 1.1rem;
+    padding: 10px;
+}
+
+/* Loading Spinner Styles */
+#loadingSpinner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1050;
+}
+
+/* Footer Styles */
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+/* History List Styles */
+#historyList .list-group-item {
+    margin-bottom: 10px;
+}
+
+/* Code Styling */
+code {
+    background-color: #e9ecef;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* Modal Styles */
+.modal-content {
+    border-radius: 8px;
+}
+
+/* Textarea Styles */
+#editableCommand {
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.analysis-panel {
+    background: #f8fafc;
+    border: 1px solid #dce3ec;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.model-status {
+    color: #5a6575;
+    font-size: 0.9rem;
+}
+
+.analysis-summary {
+    color: #243044;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.analysis-findings {
+    color: #39465a;
+    padding-left: 20px;
+}
+
+.safer-alternative {
+    background: #eef6ff;
+    border-left: 4px solid #0d6efd;
+    color: #1c3557;
+    padding: 10px 12px;
+}
+
+.risk-badge {
+    align-items: center;
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 7px 10px;
+    text-transform: uppercase;
+}
+
+.risk-low {
+    background: #e8f7ee;
+    color: #17633a;
+}
+
+.risk-medium {
+    background: #fff3cd;
+    color: #7a4f00;
+}
+
+.risk-high {
+    background: #fde8e8;
+    color: #9b1c1c;
+}
+
+.risk-unknown {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.high-risk-confirmation {
+    background: #fff5f5;
+    border: 1px solid #f3b7b7;
+    border-radius: 8px;
+    padding: 12px 12px 12px 36px;
+}
