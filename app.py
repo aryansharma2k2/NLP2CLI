@@ -6,6 +6,7 @@ from flask import Flask, jsonify, render_template, request
 
 from commands import execute_command, get_file_context, validate_and_correct_command
 from generators import DEFAULT_GENERATOR, generate_command
+from preview import preview_command
 from safety import analyze_command
 
 
@@ -79,6 +80,20 @@ def execute():
         return jsonify({"output": output, "analysis": asdict(analysis)})
     except Exception as exc:
         print(str(exc))
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/preview", methods=["POST"])
+def preview():
+    data = request.json
+    command = data.get("command", "")
+    directory = data.get("directory", ".")
+    if not command:
+        return jsonify({"error": "No command provided"}), 400
+    try:
+        result = preview_command(command, directory)
+        return jsonify(asdict(result))
+    except Exception as exc:
         return jsonify({"error": str(exc)}), 500
 
 

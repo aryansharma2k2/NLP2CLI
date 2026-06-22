@@ -266,6 +266,68 @@ body {
     color: #495566;
 }
 
+.preview-section {
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+    padding: 14px;
+}
+
+.preview-mode-live {
+    background: #f0faf4;
+    border-color: #a8d5b8;
+}
+
+.preview-mode-impact {
+    background: #fffbf0;
+    border-color: #e0cc8a;
+}
+
+.preview-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.preview-eyebrow {
+    color: #3a6b4a;
+    margin: 0;
+}
+
+.preview-mode-impact .preview-eyebrow {
+    color: #7a5c00;
+}
+
+.preview-label {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.preview-output {
+    background: #101827;
+    border-radius: 6px;
+    color: #ecf3ff;
+    font-size: 0.84rem;
+    margin: 0 0 8px;
+    max-height: 200px;
+    overflow: auto;
+    padding: 10px 12px;
+    white-space: pre-wrap;
+}
+
+.preview-refresh {
+    color: var(--muted);
+    font-size: 0.82rem;
+    padding: 0;
+    text-decoration: none;
+}
+
+.preview-refresh:hover {
+    color: var(--primary);
+    text-decoration: none;
+}
+
 .high-risk-confirmation {
     background: #fff5f5;
     border: 1px solid #f0b8b8;

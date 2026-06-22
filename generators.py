@@ -1,4 +1,6 @@
 import os
+import re
+import shlex
 from dataclasses import dataclass
 
 try:
@@ -150,24 +152,63 @@ def get_inference_device():
 
 def fallback_bash_command(input_text):
     text = input_text.lower().strip()
+    # Quoted names in the original instruction, e.g. 'test_folder' or "config.json"
+    quoted = re.findall(r"['\"]([^'\"]+)['\"]", input_text)
 
     if "current directory" in text or "where am i" in text:
         return "pwd"
-    if "list" in text and ("file" in text or "folder" in text or "directory" in text):
+
+    if "list" in text and any(w in text for w in ("file", "folder", "directory", "content")):
         return "ls -la"
-    if "hidden" in text and ("file" in text or "folder" in text):
+    if "hidden" in text and any(w in text for w in ("file", "folder")):
         return "ls -la"
-    if "python" in text and "file" in text and ("find" in text or "show" in text):
-        return "find . -name '*.py' -type f"
-    if "large" in text and "file" in text:
-        return "find . -type f -size +10M"
-    if "disk" in text and ("usage" in text or "space" in text):
+
+    # find by name / keyword in filename
+    if any(w in text for w in ("find", "search")) and "name" in text and "file" in text:
+        if quoted:
+            return f"find . -name '*{quoted[0]}*'"
+        return "find . -type f"
+
+    # find by type / extension
+    if any(w in text for w in ("find", "search", "show")) and "file" in text:
+        if "python" in text or ".py" in text:
+            return "find . -name '*.py' -type f"
+        if "large" in text:
+            return "find . -type f -size +10M"
+        if quoted:
+            return f"find . -name '*{quoted[0]}*'"
+        return "find . -type f"
+
+    if "disk" in text and any(w in text for w in ("usage", "space")):
         return "du -sh ."
+
     if "git status" in text or ("status" in text and "git" in text):
         return "git status --short"
-    if "make" in text and "directory" in text:
-        return "mkdir new_folder"
-    if "delete" in text or "remove" in text:
+
+    # mkdir
+    if any(w in text for w in ("create", "make", "new")) and any(w in text for w in ("directory", "folder")):
+        name = quoted[0] if quoted else "new_folder"
+        return f"mkdir {shlex.quote(name)}"
+
+    # cp — "Copy file 'x' from 'src_dir' to 'dst_dir'"
+    if "copy" in text and "file" in text and len(quoted) >= 2:
+        if len(quoted) >= 3:
+            src_file, src_dir, dst = quoted[0], quoted[1], quoted[2]
+            return f"cp {shlex.quote(src_dir + '/' + src_file)} {shlex.quote(dst)}"
+        return f"cp {shlex.quote(quoted[0])} {shlex.quote(quoted[1])}"
+    if "copy" in text and len(quoted) >= 2:
+        return f"cp {shlex.quote(quoted[0])} {shlex.quote(quoted[-1])}"
+
+    # rm — "delete all files in 'dir'"
+    if any(w in text for w in ("delete", "remove")) and any(w in text for w in ("all", "files", "everything")):
+        if quoted:
+            return f"rm -rf {shlex.quote(quoted[0])}/*"
+        return "rm -rf ./*"
+
+    # rm — specific file
+    if any(w in text for w in ("delete", "remove")):
+        if quoted:
+            return f"rm -i {shlex.quote(quoted[0])}"
         return "rm -i target_file"
 
     return "echo 'No confident command generated. Try a more specific instruction.'"

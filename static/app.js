@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     elements.commandForm.addEventListener("submit", handleGenerate);
     elements.executeCommand.addEventListener("click", handleExecute);
+    elements.refreshPreview.addEventListener("click", fetchPreview);
 });
 
 function bindElements() {
@@ -28,6 +29,10 @@ function bindElements() {
         modelStatus: document.getElementById("modelStatus"),
         outputModal: document.getElementById("outputModal"),
         outputText: document.getElementById("outputText"),
+        previewLabel: document.getElementById("previewLabel"),
+        previewOutput: document.getElementById("previewOutput"),
+        previewSection: document.getElementById("previewSection"),
+        refreshPreview: document.getElementById("refreshPreview"),
         resultContainer: document.getElementById("resultContainer"),
         riskBadge: document.getElementById("riskBadge"),
         saferAlternative: document.getElementById("saferAlternative"),
@@ -51,6 +56,7 @@ async function handleGenerate(event) {
         renderModelStatus(response.model_status);
         elements.resultContainer.hidden = false;
         elements.resultContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+        await fetchPreview();
     } catch (error) {
         showError(error);
     } finally {
@@ -97,6 +103,30 @@ async function postJson(url, payload) {
     }
 
     return data;
+}
+
+async function fetchPreview() {
+    elements.previewSection.hidden = true;
+    try {
+        const result = await postJson("/preview", {
+            command: elements.editableCommand.value,
+            directory: elements.directory.value,
+        });
+        renderPreview(result);
+    } catch (_) {
+        // preview failure is non-fatal
+    }
+}
+
+function renderPreview(result) {
+    if (!result?.available) {
+        elements.previewSection.hidden = true;
+        return;
+    }
+    elements.previewSection.className = `preview-section preview-mode-${result.mode}`;
+    elements.previewLabel.textContent = result.label;
+    elements.previewOutput.textContent = result.output || "(no output)";
+    elements.previewSection.hidden = false;
 }
 
 function renderAnalysis(analysis) {
