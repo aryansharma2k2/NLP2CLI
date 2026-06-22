@@ -112,9 +112,19 @@ def analyze_command(command):
             risk_score += 2
             findings.append(f"Detected {reason}: `{pattern}`.")
 
-    if any(operator in normalized_command for operator in [";", "&&", "||"]):
+    chain_ops = {";", "&&", "||"}
+    if any(op in normalized_command for op in chain_ops):
         risk_score += 1
         findings.append("The command chains multiple shell operations.")
+        for i, arg in enumerate(args):
+            if arg in chain_ops and i + 1 < len(args):
+                subexe = os.path.basename(args[i + 1])
+                if subexe in HIGH_RISK_COMMANDS:
+                    risk_score += 3
+                    findings.append(f"`{subexe}` in a chained subcommand can modify the system or delete data.")
+                elif subexe in MEDIUM_RISK_COMMANDS:
+                    risk_score += 1
+                    findings.append(f"`{subexe}` in a chained subcommand may change files or project state.")
 
     if executable == "find" and "-delete" in args:
         risk_score += 3

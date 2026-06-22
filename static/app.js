@@ -188,7 +188,9 @@ function renderModelStatus(status) {
 
     elements.modelStatus.hidden = false;
     if (status.provider === "fallback") {
-        elements.modelStatus.textContent = "Using local fallback rules because the model is unavailable.";
+        elements.modelStatus.textContent = status.error
+            ? `Using fallback rules — ${status.error}`
+            : "Using fallback rules.";
         return;
     }
 
