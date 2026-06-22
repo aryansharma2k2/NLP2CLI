@@ -363,6 +363,19 @@ body {
     justify-content: space-between;
 }
 
+.history-instruction {
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-style: italic;
+    margin: 0;
+}
+
+.history-empty {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin: 0 0 8px;
+}
+
 code {
     background: var(--code-bg);
     border-radius: 6px;

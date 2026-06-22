@@ -116,8 +116,15 @@
                     <p class="eyebrow">Session</p>
                     <h2>Execution history</h2>
                 </div>
-                <i class="fas fa-clock-rotate-left panel-icon"></i>
+                <a href="/export" id="exportBtn" class="btn btn-sm btn-outline-secondary" {% if not history %}hidden{% endif %}>
+                    <i class="fas fa-download"></i>
+                    Export
+                </a>
             </div>
+
+            {% if not history %}
+            <p class="history-empty" id="historyEmpty">No commands executed yet. Generate and run a command to see it here.</p>
+            {% endif %}
 
             <ul class="history-list" id="historyList">
                 {% for entry in history %}
@@ -128,6 +135,9 @@
                         <span class="risk-badge risk-{{ entry.analysis.risk }}">{{ entry.analysis.risk }} risk</span>
                         {% endif %}
                     </div>
+                    {% if entry.instruction %}
+                    <p class="history-instruction">{{ entry.instruction }}</p>
+                    {% endif %}
                     <code>{{ entry.command }}</code>
                     <strong>Output</strong>
                     <pre>{{ entry.output }}</pre>

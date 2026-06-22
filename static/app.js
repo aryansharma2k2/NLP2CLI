@@ -11,6 +11,11 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.commandForm.addEventListener("submit", handleGenerate);
     elements.executeCommand.addEventListener("click", handleExecute);
     elements.refreshPreview.addEventListener("click", fetchPreview);
+
+    Object.assign(elements, {
+        exportBtn: document.getElementById("exportBtn"),
+        historyEmpty: document.getElementById("historyEmpty"),
+    });
 });
 
 function bindElements() {
@@ -69,6 +74,7 @@ async function handleExecute() {
 
     try {
         const response = await postJson("/execute", {
+            instruction: elements.instruction.value,
             command: elements.editableCommand.value,
             directory: elements.directory.value,
             confirmed_high_risk: elements.confirmHighRisk.checked,
@@ -76,7 +82,7 @@ async function handleExecute() {
 
         elements.outputText.textContent = response.output;
         renderAnalysis(response.analysis);
-        prependHistory(elements.editableCommand.value, response.output, response.analysis);
+        prependHistory(elements.instruction.value, elements.editableCommand.value, response.output, response.analysis);
         state.outputModal.show();
     } catch (error) {
         if (error.payload?.analysis) {
@@ -174,7 +180,14 @@ function renderModelStatus(status) {
     elements.modelStatus.textContent = `Generated with ${status.model_id}.`;
 }
 
-function prependHistory(command, output, analysis) {
+function prependHistory(instruction, command, output, analysis) {
+    if (elements.historyEmpty) {
+        elements.historyEmpty.hidden = true;
+    }
+    if (elements.exportBtn) {
+        elements.exportBtn.hidden = false;
+    }
+
     const item = document.createElement("li");
     item.className = "history-item";
 
@@ -189,11 +202,21 @@ function prependHistory(command, output, analysis) {
         heading.append(badge);
     }
 
+    const children = [heading];
+
+    if (instruction) {
+        const intentEl = document.createElement("p");
+        intentEl.className = "history-instruction";
+        intentEl.textContent = instruction;
+        children.push(intentEl);
+    }
+
     const outputLabel = strongText("Output");
     const outputBlock = document.createElement("pre");
     outputBlock.textContent = output;
 
-    item.append(heading, codeText(command), outputLabel, outputBlock);
+    children.push(codeText(command), outputLabel, outputBlock);
+    item.append(...children);
     elements.historyList.prepend(item);
 }
 
