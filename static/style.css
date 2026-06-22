@@ -363,6 +363,44 @@ body {
     justify-content: space-between;
 }
 
+.demo-chips {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: -4px;
+}
+
+.demo-label {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.chip {
+    background: #edf1f7;
+    border: 1px solid #cdd6e2;
+    border-radius: 999px;
+    color: #344155;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.chip:hover {
+    background: #dde4ef;
+    border-color: #b0bece;
+}
+
+.history-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .history-instruction {
     color: var(--muted);
     font-size: 0.88rem;

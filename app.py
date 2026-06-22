@@ -166,6 +166,14 @@ def preview():
         return jsonify({"error": str(exc)}), 500
 
 
+@app.route("/clear", methods=["POST"])
+def clear():
+    history.clear()
+    if SESSION_FILE.exists():
+        SESSION_FILE.unlink()
+    return jsonify({"ok": True})
+
+
 @app.route("/export")
 def export():
     md = build_markdown_export(history)

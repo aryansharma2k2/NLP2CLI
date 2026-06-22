@@ -1,4 +1,6 @@
 const state = {
+    clearModal: null,
+    errorToast: null,
     outputModal: null,
 };
 
@@ -7,14 +9,20 @@ const elements = {};
 document.addEventListener("DOMContentLoaded", () => {
     bindElements();
     state.outputModal = new bootstrap.Modal(elements.outputModal);
+    state.errorToast = new bootstrap.Toast(elements.errorToast, { autohide: true, delay: 4000 });
+    state.clearModal = new bootstrap.Modal(elements.clearModal);
 
     elements.commandForm.addEventListener("submit", handleGenerate);
     elements.executeCommand.addEventListener("click", handleExecute);
     elements.refreshPreview.addEventListener("click", fetchPreview);
+    elements.clearSession.addEventListener("click", () => state.clearModal.show());
+    elements.confirmClear.addEventListener("click", handleClearSession);
 
-    Object.assign(elements, {
-        exportBtn: document.getElementById("exportBtn"),
-        historyEmpty: document.getElementById("historyEmpty"),
+    document.querySelectorAll(".chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+            elements.instruction.value = chip.dataset.instruction;
+            elements.commandForm.requestSubmit();
+        });
     });
 });
 
@@ -22,12 +30,19 @@ function bindElements() {
     Object.assign(elements, {
         analysisFindings: document.getElementById("analysisFindings"),
         analysisSummary: document.getElementById("analysisSummary"),
+        clearModal: document.getElementById("clearModal"),
+        clearSession: document.getElementById("clearSession"),
         commandForm: document.getElementById("commandForm"),
+        confirmClear: document.getElementById("confirmClear"),
         confirmHighRisk: document.getElementById("confirmHighRisk"),
         directory: document.getElementById("directory"),
         editableCommand: document.getElementById("editableCommand"),
+        errorToast: document.getElementById("errorToast"),
+        errorToastBody: document.getElementById("errorToastBody"),
         executeCommand: document.getElementById("executeCommand"),
+        exportBtn: document.getElementById("exportBtn"),
         highRiskConfirmation: document.getElementById("highRiskConfirmation"),
+        historyEmpty: document.getElementById("historyEmpty"),
         historyList: document.getElementById("historyList"),
         instruction: document.getElementById("instruction"),
         loadingSpinner: document.getElementById("loadingSpinner"),
@@ -181,12 +196,9 @@ function renderModelStatus(status) {
 }
 
 function prependHistory(instruction, command, output, analysis) {
-    if (elements.historyEmpty) {
-        elements.historyEmpty.hidden = true;
-    }
-    if (elements.exportBtn) {
-        elements.exportBtn.hidden = false;
-    }
+    if (elements.historyEmpty) elements.historyEmpty.hidden = true;
+    if (elements.exportBtn) elements.exportBtn.hidden = false;
+    if (elements.clearSession) elements.clearSession.hidden = false;
 
     const item = document.createElement("li");
     item.className = "history-item";
@@ -224,8 +236,22 @@ function setLoading(isLoading) {
     elements.loadingSpinner.hidden = !isLoading;
 }
 
+async function handleClearSession() {
+    state.clearModal.hide();
+    try {
+        await postJson("/clear", {});
+        elements.historyList.replaceChildren();
+        if (elements.historyEmpty) elements.historyEmpty.hidden = false;
+        if (elements.exportBtn) elements.exportBtn.hidden = true;
+        if (elements.clearSession) elements.clearSession.hidden = true;
+    } catch (error) {
+        showError(error);
+    }
+}
+
 function showError(error) {
-    alert(error.message || "Something went wrong. Please try again.");
+    elements.errorToastBody.textContent = error.message || "Something went wrong. Please try again.";
+    state.errorToast.show();
 }
 
 function capitalize(value) {
